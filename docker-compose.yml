@@ -1,0 +1,262 @@
+version: "3.2"
+
+#SERVICES
+services:
+
+ #HAproxy
+  haproxy:
+    image: haproxy:latest
+    hostname: haproxy
+    container_name: haproxy
+    restart: unless-stopped
+    tty: true
+    environment:
+      TZ: "America/Mexico_City"
+    volumes:
+      - ./haproxy/:/usr/local/etc/haproxy
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - webapp
+      - red-apache1
+      - red-apache2
+      - red-apache3
+      - wordpress
+      - drupal
+
+ #APACHE SERVER1
+  apache1:
+    build: '/home/user1/apache/'
+    hostname: apache1
+    container_name: apache1
+    restart: unless-stopped
+    tty: true
+    environment:
+      TZ: "America/Mexico_City"
+    depends_on:
+      - php1
+      - mysql1
+      - haproxy
+    volumes:
+      - /home/user1/public_html/:/var/www/html/
+    networks:
+      - red-apache1
+
+ #APACHE SERVER2
+  apache2:
+    build: '/home/user2/apache/'
+    hostname: apache2
+    container_name: apache2
+    restart: unless-stopped
+    tty: true
+    depends_on:
+      - php2
+      - mysql2
+      - haproxy
+    volumes:
+      - /home/user2/public_html/:/var/www/html/
+    networks:
+      - red-apache2
+
+ #APACHE SERVER3
+  apache3:
+    build: '/home/user3/apache/'
+    hostname: apache3
+    container_name: apache3
+    restart: unless-stopped
+    tty: true
+    depends_on:
+      - php3
+      - mysql3
+      - haproxy
+    volumes:
+      - /home/user3/public_html/:/var/www/html/
+    networks:
+      - red-apache3
+
+ #PHP SERVER1
+  php1:
+    build: '/home/user1/php/'
+    hostname: php1
+    container_name: php1
+    restart: unless-stopped
+    tty: true
+    environment:
+      TZ: "America/Mexico_City"
+    volumes:
+      - /home/user1/public_html/:/var/www/html/
+      - /home/user1/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - red-apache1
+
+ #PHP SERVER2
+  php2:
+    build: '/home/user2/php/'
+    hostname: php2
+    container_name: php2
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - /home/user2/public_html/:/var/www/html/
+      - /home/user2/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - red-apache2
+
+ #PHP SERVER3
+  php3:
+    build: '/home/user3/php/'
+    hostname: php3
+    container_name: php3
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - /home/user3/public_html/:/var/www/html/
+      - /home/user3/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - red-apache3
+
+ #MySQL SERVER1
+  mysql1:
+    image: mysql:5.7.22
+    hostname: mysql1
+    container_name: mysql1
+    restart: unless-stopped
+    tty: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=test
+    volumes:
+      - /home/user1/dbdata:/var/lib/mysql
+      - /home/user1/mysql/my.cfn:/etc/mysql/my.cfn
+    networks:
+      - red-apache1
+
+ #MySQL SERVER2
+  mysql2:
+    image: mysql:5.7.22
+    hostname: mysql2
+    container_name: mysql2
+    restart: unless-stopped
+    tty: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=test
+    volumes:
+      - /home/user2/dbdata:/var/lib/mysql
+      - /home/user2/mysql/my.cfn:/etc/mysql/my.cfn
+    networks:
+      - red-apache2
+
+ #MySQL SERVER3
+  mysql3:
+    image: mysql:5.7.22
+    hostname: mysql3
+    container_name: mysql3
+    restart: always
+    tty: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=test
+    volumes:
+      - /home/user3/dbdata:/var/lib/mysql
+      - /home/user3/mysql/my.cfn:/etc/mysql/my.cfn
+    networks:
+      - red-apache3      
+
+ #-------------------- 
+ # WORDPRESS
+ #-------------------- 
+  mysql-wordpress:
+    image: mysql:5.7
+    hostname: mysql-wordpress
+    container_name: mysql-wordpress
+    restart: always
+    environment:
+      MYSQL_USER: wordpress
+      MYSQL_ROOT_PASSWORD: wordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_PASSWORD: wordpress
+    volumes:
+      - /home/wordpress/dbdata:/var/lib/mysql
+    networks:
+      - wordpress
+
+  wordpress:
+    depends_on:
+      - mysql-wordpress
+      - haproxy
+    image: wordpress
+    hostname: wordpress
+    container_name: wordpress
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: mysql-wordpress:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    volumes:
+      - /home/wordpress/public_html:/var/www/html
+    networks:
+      - wordpress
+
+ #-------------------- 
+ # Drupal
+ #-------------------- 
+  mysql-drupal:
+    image: mysql:5.7
+    hostname: mysql-drupal
+    container_name: mysql-drupal
+    restart: always
+    environment:
+      MYSQL_USER: drupal
+      MYSQL_ROOT_PASSWORD: drupal
+      MYSQL_DATABASE: drupal
+      MYSQL_PASSWORD: drupal
+    volumes:
+      - /home/drupal/dbdata:/var/lib/mysql
+    networks:
+      - drupal
+
+  drupal:
+    depends_on:
+      - mysql-drupal
+      - haproxy
+    image: drupal:latest
+    hostname: drupal
+    container_name: drupal
+    restart: always
+    volumes:
+      - /home/drupal/drupal_modules:/var/www/html/modules
+      - /home/drupal/drupal_profiles:/var/www/html/profiles
+      - /home/drupal/drupal_themes:/var/www/html/themes
+      - /home/drupal/drupal_sites:/var/www/html/sites
+    networks:
+      - drupal
+
+
+#NETWORKS
+networks:
+  webapp:
+    driver: bridge
+  red-apache1:
+    driver: bridge
+  red-apache2:
+    driver: bridge
+  red-apache3:
+    driver: bridge
+  wordpress:
+    driver: bridge
+  drupal:
+    driver: bridge
+
+#Volumes
+#volumes:
+#  /home/user1/dbdata:
+#    driver: local
+#  /home/user2/dbdata:
+#    driver: local
+#  /home/user3/dbdata:
+#    driver: local
+#  dbdata:
+#    driver: local
+
