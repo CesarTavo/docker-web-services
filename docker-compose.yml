@@ -1,0 +1,183 @@
+version: "3.2"
+
+#SERVICES
+services:
+
+#HAproxy
+  haproxy:
+    image: haproxy:latest
+    hostname: haproxy
+    container_name: haproxy
+    restart: unless-stopped
+    tty: true
+    environment:
+      TZ: "America/Mexico_City"
+    volumes:
+      - ./haproxy/:/usr/local/etc/haproxy
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - webapp
+      - red-apache1
+      - red-apache2
+      - red-apache3
+
+#APACHE SERVER1
+  apache1:
+    build: '/home/user1/apache/'
+    hostname: apache1
+    container_name: apache1
+    restart: unless-stopped
+    tty: true
+    environment:
+      TZ: "America/Mexico_City"
+    depends_on:
+      - php1
+      - mysql1
+      - haproxy
+    volumes:
+      - /home/user1/public_html/:/var/www/html/
+    networks:
+      - red-apache1
+
+#APACHE SERVER2
+  apache2:
+    build: '/home/user2/apache/'
+    hostname: apache2
+    container_name: apache2
+    restart: unless-stopped
+    tty: true
+    depends_on:
+      - php2
+      - mysql2
+      - haproxy
+    volumes:
+      - /home/user2/public_html/:/var/www/html/
+    networks:
+      - red-apache2
+
+#APACHE SERVER3
+  apache3:
+    build: '/home/user3/apache/'
+    hostname: apache3
+    container_name: apache3
+    restart: unless-stopped
+    tty: true
+    depends_on:
+      - php3
+      - mysql3
+      - haproxy
+    volumes:
+      - /home/user3/public_html/:/var/www/html/
+    networks:
+      - red-apache3
+
+#PHP SERVER1
+  php1:
+    build: '/home/user1/php/'
+    hostname: php1
+    container_name: php1
+    restart: unless-stopped
+    tty: true
+    environment:
+      TZ: "America/Mexico_City"
+    volumes:
+      - /home/user1/public_html/:/var/www/html/
+      - /home/user1/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - red-apache1
+
+#PHP SERVER2
+  php2:
+    build: '/home/user2/php/'
+    hostname: php2
+    container_name: php2
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - /home/user2/public_html/:/var/www/html/
+      - /home/user2/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - red-apache2
+
+#PHP SERVER3
+  php3:
+    build: '/home/user3/php/'
+    hostname: php3
+    container_name: php3
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - /home/user3/public_html/:/var/www/html/
+      - /home/user3/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - red-apache3
+
+#MySQL SERVER1
+  mysql1:
+    image: mysql:5.7.22
+    hostname: mysql1
+    container_name: mysql1
+    restart: unless-stopped
+    tty: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=test
+    volumes:
+      - /home/user1/dbdata:/var/lib/mysql
+      - /home/user1/mysql/my.cfn:/etc/mysql/my.cfn
+    networks:
+      - red-apache1
+
+#MySQL SERVER2
+  mysql2:
+    image: mysql:5.7.22
+    hostname: mysql2
+    container_name: mysql2
+    restart: unless-stopped
+    tty: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=test
+    volumes:
+      - /home/user2/dbdata:/var/lib/mysql
+      - /home/user2/mysql/my.cfn:/etc/mysql/my.cfn
+    networks:
+      - red-apache2
+
+#MySQL SERVER3
+  mysql3:
+    image: mysql:5.7.22
+    hostname: mysql3
+    container_name: mysql3
+    restart: unless-stopped
+    tty: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=test
+    volumes:
+      - /home/user3/dbdata:/var/lib/mysql
+      - /home/user3/mysql/my.cfn:/etc/mysql/my.cfn
+    networks:
+      - red-apache3      
+
+#NETWORKS
+networks:
+  webapp:
+    driver: bridge
+  red-apache1:
+    driver: bridge
+  red-apache2:
+    driver: bridge
+  red-apache3:
+    driver: bridge
+
+#Volumes
+#volumes:
+#  /home/user1/dbdata:
+#    driver: local
+#  /home/user2/dbdata:
+#    driver: local
+#  /home/user3/dbdata:
+#    driver: local
