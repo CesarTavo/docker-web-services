@@ -1,41 +1,47 @@
+############
+# CesarTavo
+############
 
 version: '3.2'
 
-#Services
+#----------------
+# Services
+#----------------
 services:
-
-  #APACHE
+  
+  #----------------
+  # APACHE SERVICE
+  #----------------
   apache: 
-    image: httpd:2.4
-    links: 
-      - mysql
+    build: './apache/'
     depends_on:
       - php
       - mysql
     container_name: apache
+    hostname: apache
     restart: unless-stopped
     tty: true
     ports: 
       - "80:80"
       - "443:443"
     volumes:
-      - ./DocumentRoot/:/var/www/html/
-      - ./apache/demo.apache.conf:/usr/local/apache2/conf/demo.apache.conf
+      - ./html/:/var/www/html/
     networks: 
       - backend
       - frontend
 
-  #MySQL SERVICE
+  #----------------
+  # MySQL SERVICE
+  #----------------
   mysql:
     image: mysql:5.7
     container_name: mysql
+    hostname: mysql
     restart: unless-stopped
     tty: true
-    ports:
-      - "3306:3306"
     environment:
-      MYSQL_DATABASE: dbname
-      MYSQL_ROOT_PASSWORD: passroot
+      MYSQL_DATABASE: mysql
+      MYSQL_ROOT_PASSWORD: rootpassword
       SERVICE_TAGS: dev
       SERVICE_NAME: mysql
     volumes: 
@@ -44,27 +50,32 @@ services:
     networks:
       - backend
 
-  #PHP
+  #----------------
+  # PHP SERVICE
+  #----------------
   php:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: './php/'
     container_name: php
+    hostname: php
     restart: unless-stopped
     tty: true
     volumes: 
-      - ./DocumentRoot/:/var/www/html/
+      - ./html/:/var/www/html/
     networks:
       - backend
 
-#DOCKER NETWORKS
+#----------------
+# DOCKER NETWORKS
+#----------------
 networks:
   backend:
     driver: bridge
   frontend:
     driver: bridge
 
-#VOLUMES
+#----------------
+# VOLUMES
+#----------------
 volumes:
   dbdata:
     driver: local
