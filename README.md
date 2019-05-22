@@ -1,9 +1,10 @@
 # LAMP-3
 
-Here are tree LAMP'S with different containers and haproxy
+Here are tree LAMP'S with different containers, haproxy and Wordpress
 
 This branch create tree users that must be administrators to create
-a web content, so if you want to change the names of the users, change it 
+web content and a wordpress platform,
+so if you want to change the names of the users, change it 
 in the script file and docker-compose.yml too 
 
 You could help me by telling me how to make general variables, 
