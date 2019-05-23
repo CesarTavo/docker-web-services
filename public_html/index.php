@@ -1,6 +1,7 @@
-<h1>LAMP!</h1>
-<h4>INTENTANDO CONEXION BASE DE DATOS DESDE PHP...</h4><br>
+<h1> It Works!!!... </h1>
+<h4> Attempting MySQL connection from php... </h4><br>
 <?php
+
 $host = 'mysql';
 $user = 'root';
 $pass = 'rootpassword';
@@ -23,4 +24,6 @@ if ($result->num_rows > 0) {
 } else {
     echo "0 results";
 }
+
+phpinfo();
 ?>

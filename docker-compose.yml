@@ -1,9 +1,17 @@
+####################
+# @CesarTavo
+####################
+
 version: "3.2"
 
-#SERVICES
+#----------------
+# SERVICES
+#----------------
 services:
 
- #HAproxy
+ #----------------
+ # HAproxy
+ #----------------
   haproxy:
     image: haproxy:latest
     hostname: haproxy
@@ -25,9 +33,15 @@ services:
       - wordpress
       - drupal
 
- #APACHE SERVER1
+
+ #----------------
+ # FIRST LAMP
+ #----------------
+  #----------------
+  # APACHE SERVER1
+  #----------------
   apache1:
-    build: '/home/user1/apache/'
+    build: '/home/user1/apache'
     hostname: apache1
     container_name: apache1
     restart: unless-stopped
@@ -43,41 +57,11 @@ services:
     networks:
       - red-apache1
 
- #APACHE SERVER2
-  apache2:
-    build: '/home/user2/apache/'
-    hostname: apache2
-    container_name: apache2
-    restart: unless-stopped
-    tty: true
-    depends_on:
-      - php2
-      - mysql2
-      - haproxy
-    volumes:
-      - /home/user2/public_html/:/var/www/html/
-    networks:
-      - red-apache2
-
- #APACHE SERVER3
-  apache3:
-    build: '/home/user3/apache/'
-    hostname: apache3
-    container_name: apache3
-    restart: unless-stopped
-    tty: true
-    depends_on:
-      - php3
-      - mysql3
-      - haproxy
-    volumes:
-      - /home/user3/public_html/:/var/www/html/
-    networks:
-      - red-apache3
-
- #PHP SERVER1
+  #----------------
+  # PHP SERVER1
+  #----------------
   php1:
-    build: '/home/user1/php/'
+    build: './php/'
     hostname: php1
     container_name: php1
     restart: unless-stopped
@@ -90,33 +74,9 @@ services:
     networks:
       - red-apache1
 
- #PHP SERVER2
-  php2:
-    build: '/home/user2/php/'
-    hostname: php2
-    container_name: php2
-    restart: unless-stopped
-    tty: true
-    volumes:
-      - /home/user2/public_html/:/var/www/html/
-      - /home/user2/php/local.ini:/usr/local/etc/php/conf.d/local.ini
-    networks:
-      - red-apache2
-
- #PHP SERVER3
-  php3:
-    build: '/home/user3/php/'
-    hostname: php3
-    container_name: php3
-    restart: unless-stopped
-    tty: true
-    volumes:
-      - /home/user3/public_html/:/var/www/html/
-      - /home/user3/php/local.ini:/usr/local/etc/php/conf.d/local.ini
-    networks:
-      - red-apache3
-
- #MySQL SERVER1
+  #----------------
+  # MySQL SERVER1
+  #----------------
   mysql1:
     image: mysql:5.7.22
     hostname: mysql1
@@ -132,7 +92,46 @@ services:
     networks:
       - red-apache1
 
- #MySQL SERVER2
+
+ #----------------
+ # SECOND LAMP
+ #----------------
+  #----------------
+  # APACHE SERVER2
+  #----------------
+  apache2:
+    build: '/home/user2/apache'
+    hostname: apache2
+    container_name: apache2
+    restart: unless-stopped
+    tty: true
+    depends_on:
+      - php2
+      - mysql2
+      - haproxy
+    volumes:
+      - /home/user2/public_html/:/var/www/html/
+    networks:
+      - red-apache2
+
+  #----------------
+  # PHP SERVER2
+  #----------------
+  php2:
+    build: './php/'
+    hostname: php2
+    container_name: php2
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - /home/user2/public_html/:/var/www/html/
+      - /home/user2/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - red-apache2
+
+  #----------------
+  # MySQL SERVER2
+  #----------------
   mysql2:
     image: mysql:5.7.22
     hostname: mysql2
@@ -148,12 +147,51 @@ services:
     networks:
       - red-apache2
 
- #MySQL SERVER3
+
+ #----------------
+ # THIRD LAMP
+ #----------------
+  #----------------
+  # APACHE SERVER3
+  #----------------
+  apache3:
+    build: '/home/user3/apache'
+    hostname: apache3
+    container_name: apache3
+    restart: unless-stopped
+    tty: true
+    depends_on:
+      - php3
+      - mysql3
+      - haproxy
+    volumes:
+      - /home/user3/public_html/:/var/www/html/
+    networks:
+      - red-apache3
+
+  #----------------
+  # PHP SERVER3
+  #----------------
+  php3:
+    build: './php/'
+    hostname: php3
+    container_name: php3
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - /home/user3/public_html/:/var/www/html/
+      - /home/user3/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - red-apache3
+
+  #----------------
+  # MySQL SERVER3
+  #----------------
   mysql3:
     image: mysql:5.7.22
     hostname: mysql3
     container_name: mysql3
-    restart: always
+    restart: unless-stopped
     tty: true
     environment:
       - MYSQL_ROOT_PASSWORD=rootpassword
@@ -165,13 +203,16 @@ services:
       - red-apache3      
 
  #-------------------- 
- # WORDPRESS
+ # WORDPRESS-SERVER
  #-------------------- 
+  #----------------
+  # MySQL WORDPRESS
+  #----------------
   mysql-wordpress:
     image: mysql:5.7
     hostname: mysql-wordpress
     container_name: mysql-wordpress
-    restart: always
+    restart: unless-stopped
     environment:
       MYSQL_USER: wordpress
       MYSQL_ROOT_PASSWORD: wordpress
@@ -182,6 +223,9 @@ services:
     networks:
       - wordpress
 
+  #----------------
+  # WEB WORDPRESS
+  #----------------
   wordpress:
     depends_on:
       - mysql-wordpress
@@ -189,7 +233,7 @@ services:
     image: wordpress
     hostname: wordpress
     container_name: wordpress
-    restart: always
+    restart: unless-stopped
     environment:
       WORDPRESS_DB_HOST: mysql-wordpress:3306
       WORDPRESS_DB_USER: wordpress
@@ -199,14 +243,18 @@ services:
     networks:
       - wordpress
 
+
  #-------------------- 
- # Drupal
+ # DRUPAL-SERVER
  #-------------------- 
+  #----------------
+  # MySQL Drupal
+  #----------------
   mysql-drupal:
     image: mysql:5.7
     hostname: mysql-drupal
     container_name: mysql-drupal
-    restart: always
+    restart: unless-stopped
     environment:
       MYSQL_USER: drupal
       MYSQL_ROOT_PASSWORD: drupal
@@ -217,6 +265,9 @@ services:
     networks:
       - drupal
 
+  #----------------
+  # MySQL Drupal
+  #----------------
   drupal:
     depends_on:
       - mysql-drupal
@@ -224,7 +275,7 @@ services:
     image: drupal:latest
     hostname: drupal
     container_name: drupal
-    restart: always
+    restart: unless-stopped
     volumes:
       - /home/drupal/drupal_modules:/var/www/html/modules
       - /home/drupal/drupal_profiles:/var/www/html/profiles
